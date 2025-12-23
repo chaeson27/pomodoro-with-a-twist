@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro with a Twist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="game-container" id="main-game">
+        <div class="stats-bar">
+            <div class="stat">🛡️ Lvl: <span id="level" class="highlight">1</span></div>
+            <div class="stat">💰 Gold: <span id="gold" class="highlight">0</span></div>
+            <div class="stat">✨ XP: <span id="xp" class="highlight">0</span> / <span id="xp-req">100</span></div>
+        </div>
+
+        <div class="arena">
+            <div class="character hero">
+                <div class="emoji floating">🧙‍♂️</div>
+                <div class="name-container" id="open-profile-btn">
+                    <div class="name" id="hero-name-display">You</div>
+                    <i class="fas fa-pen" style="font-size: 0.7rem; color: #666; margin-left: 5px;"></i>
+                </div>
+            </div>
+            
+            <div class="vs-container"><span class="vs">VS</span></div>
+
+            <div class="character monster">
+                <div class="emoji floating-delayed" id="monster-emoji">👹</div>
+                <div class="name" id="monster-name">Procrastination</div>
+                <div class="hp-bar-bg"><div class="hp-bar" id="monster-hp"></div></div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h1 id="timer-display" class="glow-text">25:00</h1>
+            
+            <div id="active-subject-display" class="subject-status hidden">
+                <span id="subject-name-display">Calculus</span>
+                <div class="subject-progress-bg"><div class="subject-progress-bar" id="subject-progress-bar"></div></div>
+                <span class="subject-time-text"><span id="subject-current">0</span> / <span id="subject-target">600</span> mins</span>
+            </div>
+
+            <p id="status-text">Ready to fight?</p>
+
+            <div class="subject-selection">
+                <select id="subject-select"><option value="">-- No Subject (Free Play) --</option></select>
+                <button id="manage-subjects-btn" class="btn-icon">⚙️</button>
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-area">
+                    <label>⚔️ Focus:</label>
+                    <div class="input-wrapper"><input type="number" id="focus-input" value="25" min="1" max="180"><span class="unit">min</span></div>
+                </div>
+                <div class="settings-area">
+                    <label>☕ Break:</label>
+                    <div class="input-wrapper"><input type="number" id="break-input" value="5" min="1" max="10"><span class="unit">min</span></div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="start-btn" class="btn-primary">Start Battle</button>
+                <button id="shop-btn" class="btn-shop">🛒 Shop</button>
+                <button id="give-up-btn" class="btn-secondary" disabled>Retreat</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="break-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>🎉 Victory!</h2>
+            <h1 id="break-timer">05:00</h1>
+            <div id="activity-menu">
+                <p>Choose an activity:</p>
+                <div class="activity-buttons">
+                    <button id="btn-quote">🔮 Wisdom</button>
+                    <button id="btn-jumper">🦖 Jumper</button>
+                    <button id="btn-reflex">⚡ Reflex</button>
+                </div>
+            </div>
+            <div id="activity-display" class="hidden"><div id="content-area"></div><button class="btn-secondary" id="stop-activity-btn" style="margin-top:10px;">Back</button></div>
+            <button class="btn-primary" id="skip-break-btn" style="margin-top: 15px;">Skip Break</button>
+        </div>
+    </div>
+
+    <div id="shop-modal" class="modal hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="margin:0;">🛒 Item Shop</h2>
+                <button class="btn-close" id="close-shop-btn">X</button>
+            </div>
+            <h3 style="color:#ffd700; border-bottom:1px solid #444; padding-bottom:10px; margin-bottom:20px;">Gold: <span id="shop-gold-display">0</span> 💰</h3>
+            <div id="shop-grid" class="shop-grid"></div>
+        </div>
+    </div>
+
+    <div id="subject-modal" class="modal hidden">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="margin:0;">📚 Study Goals</h2>
+                <button class="btn-close" id="close-subject-btn">X</button>
+            </div>
+            <div class="new-subject-form">
+                <input type="text" id="new-subject-name" placeholder="Subject Name" />
+                <input type="number" id="new-subject-target" placeholder="Target Hours" />
+                <button id="add-subject-btn" class="btn-primary">ADD</button>
+            </div>
+            <div id="subject-list" class="subject-list"></div>
+        </div>
+    </div>
+
+    <div id="profile-modal" class="modal hidden">
+        <div class="modal-content" style="width: 400px;">
+            <h2>👤 User Profile</h2>
+            <p>What should we call you, hero?</p>
+            <input type="text" id="username-input" class="profile-input" placeholder="Enter your name" maxlength="15">
+            <button id="save-profile-btn" class="btn-primary">Save Profile</button>
+        </div>
+    </div>
+
+    <div id="welcome-modal" class="modal hidden">
+        <div class="modal-content" style="width: 500px; text-align: left;">
+            <h2 id="welcome-title" style="text-align: center; color: #00d2ff;">Welcome Hero!</h2>
+            <div id="welcome-body" style="margin: 20px 0; line-height: 1.6; color: #ddd;"></div>
+            <button id="close-welcome-btn" class="btn-primary" style="width: 100%;">Let's Begin!</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
