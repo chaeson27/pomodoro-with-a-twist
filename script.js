@@ -1,4 +1,30 @@
+// --- IMPORT FIREBASE LIBRARIES (Using stable version 10.7.1) ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs } 
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// --- YOUR FIREBASE CONFIGURATION ---
+const firebaseConfig = {
+    apiKey: "AIzaSyCLISwsJAUkHXRxwOsatFY1U29EfVS-Yn0",
+    authDomain: "pomodororpg-1c035.firebaseapp.com",
+    projectId: "pomodororpg-1c035",
+    storageBucket: "pomodororpg-1c035.firebasestorage.app",
+    messagingSenderId: "415950552230",
+    appId: "1:415950552230:web:308f498de1e7a410a68867"
+};
+
+// --- INITIALIZE FIREBASE ---
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// --- GAME VARIABLES ---
+let currentUser = null; 
+
 document.addEventListener('DOMContentLoaded', () => {
+    // --- LOAD LOCAL DATA (Defaults) ---
     let username = localStorage.getItem('rpg_username') || "You";
     let isReturning = localStorage.getItem('rpg_is_returning') === 'true';
     let xp = parseInt(localStorage.getItem('rpg_xp')) || 0;
@@ -13,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let xpReq = Math.floor(100 * Math.pow(1.2, level - 1));
     let timer, timeLeft, isFighting = false;
 
+    // --- AUDIO SYSTEM ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -28,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (type === 'click') { osc.type='triangle'; osc.frequency.setValueAtTime(800,now); gainNode.gain.setValueAtTime(0.05,now); gainNode.gain.exponentialRampToValueAtTime(0.001,now+0.05); osc.start(now); osc.stop(now+0.05); }
     }
 
+    // --- DOM ELEMENTS ---
     const timerDisplay = document.getElementById('timer-display');
     const monsterHpBar = document.getElementById('monster-hp');
     const statusText = document.getElementById('status-text');
@@ -57,16 +85,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const subjectModal = document.getElementById('subject-modal');
     const profileModal = document.getElementById('profile-modal');
     const welcomeModal = document.getElementById('welcome-modal');
-    const shopGrid = document.getElementById('shop-grid');
+    const authModal = document.getElementById('auth-modal');
+    const leaderboardModal = document.getElementById('leaderboard-modal');
+
     const contentArea = document.getElementById('content-area');
     const breakTimerDisplay = document.getElementById('break-timer');
 
+    // --- SETUP UI ---
     updateStatsUI();
     applyCosmetics();
     renderSubjectList();
     renderSubjectDropdown();
-    checkWelcome();
 
+    // --- EVENT LISTENERS ---
     startBtn.addEventListener('click', () => { playSound('start'); startFocus(); });
     giveUpBtn.addEventListener('click', () => { playSound('click'); giveUp(); });
     shopBtn.addEventListener('click', () => { playSound('click'); openShop(); });
@@ -74,6 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-shop-btn').addEventListener('click', () => shopModal.classList.add('hidden'));
     document.getElementById('close-subject-btn').addEventListener('click', () => subjectModal.classList.add('hidden'));
     document.getElementById('close-welcome-btn').addEventListener('click', () => welcomeModal.classList.add('hidden'));
+    document.getElementById('close-auth-btn').addEventListener('click', () => authModal.classList.add('hidden'));
+    document.getElementById('close-leaderboard-btn').addEventListener('click', () => leaderboardModal.classList.add('hidden'));
     
     document.getElementById('open-profile-btn').addEventListener('click', openProfile);
     document.getElementById('save-profile-btn').addEventListener('click', saveProfile);
@@ -88,33 +121,164 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('stop-activity-btn').addEventListener('click', stopActivity);
     document.getElementById('skip-break-btn').addEventListener('click', endBreak);
 
-    function checkWelcome() {
-        welcomeModal.classList.remove('hidden');
-        const welcomeTitle = document.getElementById('welcome-title');
-        const welcomeBody = document.getElementById('welcome-body');
+    // --- CLOUD BUTTON LISTENERS ---
+    document.getElementById('auth-btn').addEventListener('click', () => authModal.classList.remove('hidden'));
+    document.getElementById('leaderboard-btn').addEventListener('click', () => { leaderboardModal.classList.remove('hidden'); loadLeaderboard('level'); });
+    document.getElementById('confirm-login-btn').addEventListener('click', handleLogin);
+    document.getElementById('confirm-register-btn').addEventListener('click', handleRegister);
+    document.getElementById('lb-tab-level').addEventListener('click', () => loadLeaderboard('level'));
+    document.getElementById('lb-tab-jumper').addEventListener('click', () => loadLeaderboard('jumper'));
+    document.getElementById('lb-tab-reflex').addEventListener('click', () => loadLeaderboard('reflex'));
 
-        if (!isReturning) {
-            welcomeTitle.innerText = "Welcome, Hero!";
-            welcomeBody.innerHTML = `
-                <p>Welcome to <strong>Focus RPG</strong>, the game where studying makes you stronger!</p>
-                <ul class="welcome-list">
-                    <li>⏱️ <strong>Set Time:</strong> Choose your Focus time.</li>
-                    <li>⚔️ <strong>Fight:</strong> The timer drains the monster's HP.</li>
-                    <li>💰 <strong>Reward:</strong> Earn Gold & XP when you finish.</li>
-                    <li>🛍️ <strong>Shop:</strong> Buy cool avatars and themes.</li>
-                </ul>
-                <p>Ready to start your journey?</p>
-            `;
-            localStorage.setItem('rpg_is_returning', 'true');
+    // --- FIREBASE AUTH HANDLER ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('auth-btn').innerText = "👤 Logout";
+            document.getElementById('auth-btn').onclick = handleLogout; // Replace click action
+            statusText.innerText = "Synced with Cloud ☁️";
+            authModal.classList.add('hidden');
+            loadCloudData();
         } else {
-            const quotes = ["“It always seems impossible until it’s done.”", "“Future You will thank you for this.”", "“Don’t watch the clock; do what it does. Keep going.”"];
+            currentUser = null;
+            document.getElementById('auth-btn').innerText = "☁️ Login";
+            document.getElementById('auth-btn').onclick = () => authModal.classList.remove('hidden'); // Reset click action
+            checkWelcome(); 
+        }
+    });
+
+    async function handleRegister() {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-pass').value;
+        if(pass.length < 6) { document.getElementById('auth-msg').innerText = "Password must be 6+ chars"; return; }
+        try {
+            await createUserWithEmailAndPassword(auth, email, pass);
+            saveGame(true); // Save initial data
+        } catch (error) { document.getElementById('auth-msg').innerText = error.message; }
+    }
+
+    async function handleLogin() {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-pass').value;
+        try { await signInWithEmailAndPassword(auth, email, pass); } 
+        catch (error) { document.getElementById('auth-msg').innerText = "Login failed. Check email/password."; }
+    }
+
+    async function handleLogout() {
+        await signOut(auth);
+        location.reload(); 
+    }
+
+    // --- CLOUD SYNC FUNCTIONS ---
+    async function loadCloudData() {
+        const docRef = doc(db, "users", currentUser.uid);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            username = data.username || "Hero";
+            xp = data.xp || 0;
+            level = data.level || 1;
+            gold = data.gold || 0;
+            equippedAvatar = data.equippedAvatar || '🧙‍♂️';
+            equippedTheme = data.equippedTheme || 'theme_default';
+            // Sync highscores to local storage too so games know them
+            if(data.jumper_highscore) localStorage.setItem('jumper_highscore', data.jumper_highscore);
+            if(data.reflex_highscore) localStorage.setItem('reflex_highscore', data.reflex_highscore);
+            
+            updateStatsUI();
+            applyCosmetics();
+        } else {
+            saveGame(true); // Create doc if missing
+        }
+    }
+
+    async function saveGame(forceCloud = false) {
+        // Local Save
+        localStorage.setItem('rpg_username', username);
+        localStorage.setItem('rpg_xp', xp);
+        localStorage.setItem('rpg_level', level);
+        localStorage.setItem('rpg_gold', gold);
+        localStorage.setItem('rpg_inventory', JSON.stringify(inventory));
+        localStorage.setItem('rpg_equipped_avatar', equippedAvatar);
+        localStorage.setItem('rpg_equipped_theme', equippedTheme);
+        localStorage.setItem('rpg_subjects', JSON.stringify(subjects));
+
+        // Cloud Save
+        if (currentUser) {
+            try {
+                await setDoc(doc(db, "users", currentUser.uid), {
+                    username: username,
+                    xp: xp,
+                    level: level,
+                    gold: gold,
+                    equippedAvatar: equippedAvatar,
+                    equippedTheme: equippedTheme,
+                    jumper_highscore: parseInt(localStorage.getItem('jumper_highscore') || 0),
+                    reflex_highscore: parseInt(localStorage.getItem('reflex_highscore') || 0)
+                }, { merge: true });
+                if(forceCloud) console.log("Cloud Saved");
+            } catch (e) { console.error("Save Error:", e); }
+        }
+    }
+
+    async function loadLeaderboard(type) {
+        const list = document.getElementById('leaderboard-list');
+        list.innerHTML = '<p style="text-align:center;">Fetching Data...</p>';
+        
+        // Update Tabs
+        document.querySelectorAll('.activity-buttons button').forEach(b => b.style.opacity = '0.5');
+        document.getElementById(`lb-tab-${type}`).style.opacity = '1';
+
+        let field = type === 'level' ? 'level' : (type === 'jumper' ? 'jumper_highscore' : 'reflex_highscore');
+        
+        // Query Top 10
+        const q = query(collection(db, "users"), orderBy(field, "desc"), limit(10));
+        
+        try {
+            const querySnapshot = await getDocs(q);
+            list.innerHTML = '';
+            let rank = 1;
+            querySnapshot.forEach((doc) => {
+                const d = doc.data();
+                const score = d[field] || 0;
+                let entryClass = (currentUser && doc.id === currentUser.uid) ? 'highlight' : '';
+                let icon = '👤';
+                if(rank===1) icon='🥇'; if(rank===2) icon='🥈'; if(rank===3) icon='🥉';
+
+                list.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #444; color:#ddd; font-size:0.9rem;" class="${entryClass}">
+                        <span>${icon} ${rank}. <strong>${d.username}</strong></span>
+                        <span style="color:#00d2ff;">${score}</span>
+                    </div>
+                `;
+                rank++;
+            });
+            if(rank === 1) list.innerHTML = '<p style="text-align:center">No records yet. Play to win!</p>';
+        } catch (e) {
+            console.error(e);
+            list.innerHTML = '<p style="color:red; text-align:center;">Error loading. <br>Did you enable the Database?</p>';
+        }
+    }
+
+    // --- ORIGINAL GAME LOGIC ---
+    function checkWelcome() {
+        if (!isReturning && !currentUser) {
+            welcomeModal.classList.remove('hidden');
+            document.getElementById('welcome-title').innerText = "Welcome, Hero!";
+            document.getElementById('welcome-body').innerHTML = `
+                <p>Welcome to <strong>Focus RPG</strong>!</p>
+                <ul class="welcome-list">
+                    <li>⏱️ <strong>Focus:</strong> Defeat monsters by studying.</li>
+                    <li>☁️ <strong>Cloud:</strong> Login to join the Leaderboards!</li>
+                </ul>`;
+            localStorage.setItem('rpg_is_returning', 'true');
+        } else if (!currentUser) {
+            const quotes = ["“It always seems impossible until it’s done.”", "“Future You will thank you for this.”"];
             const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-            welcomeTitle.innerText = `Welcome back, ${username}!`;
-            welcomeBody.innerHTML = `
-                <p>You are currently <strong>Level ${level}</strong> with <strong>${gold} Gold</strong>.</p>
-                <p>Let's stay productive today!</p>
-                <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; margin-top:15px; font-style: italic; color: #00d2ff;">${randomQuote}</div>
-            `;
+            welcomeModal.classList.remove('hidden');
+            document.getElementById('welcome-title').innerText = "Welcome back!";
+            document.getElementById('welcome-body').innerHTML = `<div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; font-style: italic; color: #00d2ff;">${randomQuote}</div>`;
         }
     }
 
@@ -127,21 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = document.getElementById('username-input').value.trim();
         if(input) {
             username = input;
-            localStorage.setItem('rpg_username', username);
+            saveGame(); 
             updateStatsUI();
             profileModal.classList.add('hidden');
             playSound('coin');
         }
-    }
-
-    function saveGame() {
-        localStorage.setItem('rpg_xp', xp);
-        localStorage.setItem('rpg_level', level);
-        localStorage.setItem('rpg_gold', gold);
-        localStorage.setItem('rpg_inventory', JSON.stringify(inventory));
-        localStorage.setItem('rpg_equipped_avatar', equippedAvatar);
-        localStorage.setItem('rpg_equipped_theme', equippedTheme);
-        localStorage.setItem('rpg_subjects', JSON.stringify(subjects));
     }
 
     function updateStatsUI() {
@@ -296,7 +450,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameInterval, gameTimeout;
     function startActivity(type) { playSound('click'); document.getElementById('activity-menu').classList.add('hidden'); document.getElementById('activity-display').classList.remove('hidden'); contentArea.innerHTML = ''; if (type === 'quotes') loadQuotes(); if (type === 'jumper') loadJumper(); if (type === 'reflex') loadReflex(); }
     function stopActivity() { document.getElementById('activity-display').classList.add('hidden'); document.getElementById('activity-menu').classList.remove('hidden'); contentArea.innerHTML = ''; if(gameInterval) clearInterval(gameInterval); if(gameTimeout) clearTimeout(gameTimeout); }
-    function showGameOver(score, gameType, restartCallback) { playSound('click'); let highScore = localStorage.getItem(gameType + '_highscore') || 0; if (score > highScore) { highScore = score; localStorage.setItem(gameType + '_highscore', highScore); } contentArea.innerHTML += `<div class="game-over-backdrop"><div class="game-over-card"><h3>Game Over</h3><div class="score-display">${score}</div><div class="score-label">Points</div><button id="retry-btn">Try Again</button><div class="high-score-footer">🏆 High Score: ${highScore}</div></div></div>`; document.getElementById('retry-btn').addEventListener('click', restartCallback); }
+    function showGameOver(score, gameType, restartCallback) { 
+        playSound('click'); 
+        let highScore = localStorage.getItem(gameType + '_highscore') || 0; 
+        if (score > highScore) { 
+            highScore = score; 
+            localStorage.setItem(gameType + '_highscore', highScore); 
+            // Save to cloud immediately if highscore beat
+            saveGame();
+        } 
+        contentArea.innerHTML += `<div class="game-over-backdrop"><div class="game-over-card"><h3>Game Over</h3><div class="score-display">${score}</div><div class="score-label">Points</div><button id="retry-btn">Try Again</button><div class="high-score-footer">🏆 High Score: ${highScore}</div></div></div>`; 
+        document.getElementById('retry-btn').addEventListener('click', restartCallback); 
+    }
 
     const quotes = ["“It always seems impossible until it’s done.”", "“Don’t watch the clock; do what it does. Keep going.”", "“Future You will thank you for this.”"];
     function loadQuotes() { let q = quotes[Math.floor(Math.random() * quotes.length)]; contentArea.innerHTML = `<div id="quote-text">${q}</div><button class="btn-primary" id="next-quote">Next</button>`; document.getElementById('next-quote').addEventListener('click', () => { playSound('click'); loadQuotes(); }); }

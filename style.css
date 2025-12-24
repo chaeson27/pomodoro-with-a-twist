@@ -63,7 +63,7 @@ body {
 .input-wrapper:focus-within { border-bottom-color: #00d2ff; }
 
 input[type="number"] {
-    background: transparent; color: #fff; 
+    background: transparent;  color: #fff; 
     border: none; width: 60px; text-align: center; 
     font-family: inherit; font-size: 1.5rem; font-weight: bold; 
     outline: none; -moz-appearance: textfield !important; appearance: textfield !important; 

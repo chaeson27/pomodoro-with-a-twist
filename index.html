@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="description" content="A free gamified Pomodoro timer that turns studying into an RPG. Earn XP, level up, and battle monsters while you focus.">
+    <meta name="keywords" content="pomodoro timer, gamified study, rpg productivity, focus timer, study game">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pomodoro with a Twist</title>
@@ -67,6 +69,47 @@
                 <button id="shop-btn" class="btn-shop">🛒 Shop</button>
                 <button id="give-up-btn" class="btn-secondary" disabled>Retreat</button>
             </div>
+
+            <div class="button-group" style="margin-top: 10px;">
+                <button id="leaderboard-btn" class="btn-secondary" style="border-color: #ffd700; color: #ffd700;">🏆 Rank</button>
+                <button id="auth-btn" class="btn-secondary">☁️ Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>☁️ Cloud Save</h2>
+            <p>Login to save progress & compete on leaderboards!</p>
+            <input type="email" id="auth-email" class="profile-input" placeholder="Email" style="margin-bottom: 10px;">
+            <input type="password" id="auth-pass" class="profile-input" placeholder="Password (6+ chars)">
+            
+            <div class="button-group" style="margin-top: 20px;">
+                <button id="confirm-login-btn" class="btn-primary">Login</button>
+                <button id="confirm-register-btn" class="btn-shop">Register</button>
+            </div>
+            
+            <p id="auth-msg" style="color: #ff6b6b; margin-top: 10px; font-size: 0.9rem;"></p>
+            <button class="btn-close" id="close-auth-btn" style="position:absolute; top:20px; right:20px;">X</button>
+        </div>
+    </div>
+
+    <div id="leaderboard-modal" class="modal hidden">
+        <div class="modal-content" style="width: 500px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="color: #ffd700;">🏆 Global Rankings</h2>
+                <button class="btn-close" id="close-leaderboard-btn">X</button>
+            </div>
+            
+            <div class="activity-buttons">
+                <button id="lb-tab-level" class="active-tab">Levels</button>
+                <button id="lb-tab-jumper">Jumper</button>
+                <button id="lb-tab-reflex">Reflex</button>
+            </div>
+
+            <div id="leaderboard-list" style="text-align: left; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;">
+                <p style="text-align:center;">Loading scores...</p>
+            </div>
         </div>
     </div>
 
@@ -130,6 +173,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
