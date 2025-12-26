@@ -1,122 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="description" content="A free gamified Pomodoro timer that turns studying into an RPG. Earn XP, level up, and battle monsters while you focus.">
-    <meta name="keywords" content="pomodoro timer, gamified study, rpg productivity, focus timer, study game">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pomodoro with a Twist</title>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pomodoro RPG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
-    <div class="game-container" id="main-game">
-        <div class="stats-bar">
-            <div class="stat">🛡️ Lvl: <span id="level" class="highlight">1</span></div>
-            <div class="stat">💰 Gold: <span id="gold" class="highlight">0</span></div>
-            <div class="stat">✨ XP: <span id="xp" class="highlight">0</span> / <span id="xp-req">100</span></div>
-        </div>
-
-        <div class="arena">
-            <div class="character hero">
-                <div class="emoji floating">🧙‍♂️</div>
-                <div class="name-container" id="open-profile-btn">
-                    <div class="name" id="hero-name-display">You</div>
-                    <i class="fas fa-pen" style="font-size: 0.7rem; color: #666; margin-left: 5px;"></i>
-                </div>
-            </div>
+    <div class="main-wrapper">
+        <div class="game-card">
             
-            <div class="vs-container"><span class="vs">VS</span></div>
-
-            <div class="character monster">
-                <div class="emoji floating-delayed" id="monster-emoji">👹</div>
-                <div class="name" id="monster-name">Procrastination</div>
-                <div class="hp-bar-bg"><div class="hp-bar" id="monster-hp"></div></div>
-            </div>
-        </div>
-
-        <div class="control-panel">
-            <h1 id="timer-display" class="glow-text">25:00</h1>
-            
-            <div id="active-subject-display" class="subject-status hidden">
-                <span id="subject-name-display">Calculus</span>
-                <div class="subject-progress-bg"><div class="subject-progress-bar" id="subject-progress-bar"></div></div>
-                <span class="subject-time-text"><span id="subject-current">0</span> / <span id="subject-target">600</span> mins</span>
-            </div>
-
-            <p id="status-text">Ready to fight?</p>
-
-            <div class="subject-selection">
-                <select id="subject-select"><option value="">-- No Subject (Free Play) --</option></select>
-                <button id="manage-subjects-btn" class="btn-icon">⚙️</button>
-            </div>
-
-            <div class="settings-row">
-                <div class="settings-area">
-                    <label>⚔️ Focus:</label>
-                    <div class="input-wrapper"><input type="number" id="focus-input" value="25" min="1" max="180"><span class="unit">min</span></div>
+            <div class="panel-left">
+                <div class="stats-row">
+                    <div class="stat-badge">🛡️ <span id="level">1</span></div>
+                    <div class="stat-badge gold-badge">💰 <span id="gold">0</span></div>
                 </div>
-                <div class="settings-area">
-                    <label>☕ Break:</label>
-                    <div class="input-wrapper"><input type="number" id="break-input" value="5" min="1" max="10"><span class="unit">min</span></div>
+
+                <div class="xp-section">
+                    <div class="xp-info">
+                        <span>XP Progress</span>
+                        <span class="xp-val"><span id="xp">0</span> / <span id="xp-req">100</span></span>
+                    </div>
+                    <div class="xp-track"><div class="xp-fill" id="xp-bar-fill"></div></div>
+                </div>
+
+                <div class="battle-stage">
+                    <div class="fighter hero">
+                        <div class="avatar floating">🧙‍♂️</div>
+                        <div class="fighter-info" id="open-profile-btn">
+                            <h3 id="hero-name-display">You</h3>
+                            <i class="fas fa-pen edit-icon"></i>
+                        </div>
+                    </div>
+
+                    <div class="vs-badge">VS</div>
+
+                    <div class="fighter">
+                        <div class="avatar" id="monster-emoji">👹</div>
+                        <h3 id="monster-name">Procrastination</h3>
+                        <div class="hp-bar-container"><div id="monster-hp" class="hp-bar-fill"></div></div>
+                    </div>
                 </div>
             </div>
 
-            <div class="button-group">
-                <button id="start-btn" class="btn-primary">Start Battle</button>
-                <button id="shop-btn" class="btn-shop">🛒 Shop</button>
-                <button id="give-up-btn" class="btn-secondary" disabled>Retreat</button>
-            </div>
+            <div class="panel-right">
+                <div class="timer-section">
+                    <h1 id="timer-display">25:00</h1>
+                    <p id="status-text">Ready to Focus?</p>
+                </div>
 
-            <div class="button-group" style="margin-top: 10px;">
-                <button id="leaderboard-btn" class="btn-secondary" style="border-color: #ffd700; color: #ffd700;">🏆 Rank</button>
-                <button id="auth-btn" class="btn-secondary">☁️ Login</button>
+                <div id="active-subject-display" class="subject-tracker hidden">
+                    <div class="tracker-header">
+                        <span id="subject-name-display">Subject</span>
+                        <span class="tracker-time"><span id="subject-current">0</span>/<span id="subject-target">100</span>m</span>
+                    </div>
+                    <div class="tracker-bar"><div class="tracker-fill" id="subject-progress-bar"></div></div>
+                </div>
+
+                <div class="control-grid">
+                    <div class="input-group full-width">
+                        <div class="select-wrapper">
+                            <select id="subject-select"><option value="">-- Free Play Mode --</option></select>
+                            <i class="fas fa-chevron-down dropdown-arrow"></i>
+                        </div>
+                        <button id="manage-subjects-btn" class="btn-icon">⚙️</button>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-box">
+                            <label>⚔️ Focus (min)</label>
+                            <input type="number" id="focus-input" value="25" min="1" max="180">
+                        </div>
+                        <div class="setting-box">
+                            <label>☕ Break (min)</label>
+                            <input type="number" id="break-input" value="5" min="1" max="10">
+                        </div>
+                    </div>
+
+                    <div class="action-row">
+                        <button id="start-btn" class="btn-primary">Start Battle</button>
+                        <button id="give-up-btn" class="btn-danger" disabled>Give Up</button>
+                    </div>
+
+                    <div class="links-row">
+                        <button id="shop-btn" class="btn-link">🛒 Shop</button>
+                        <button id="leaderboard-btn" class="btn-link">🏆 Rank</button>
+                        <button id="auth-btn" class="btn-link">☁️ Save</button>
+                        <button id="mute-btn" class="btn-link">🔊 On</button> </div>
+                    </div>
+                </div>
             </div>
+        <div id="toast-container"></div>
         </div>
     </div>
 
-    <div id="auth-modal" class="modal hidden">
+<div id="auth-modal" class="modal hidden">
         <div class="modal-content">
-            <h2>☁️ Cloud Save</h2>
-            <p>Login to save progress & compete on leaderboards!</p>
-            <input type="email" id="auth-email" class="profile-input" placeholder="Email" style="margin-bottom: 10px;">
-            <input type="password" id="auth-pass" class="profile-input" placeholder="Password (6+ chars)">
-            
-            <div class="button-group" style="margin-top: 20px;">
-                <button id="confirm-login-btn" class="btn-primary">Login</button>
-                <button id="confirm-register-btn" class="btn-shop">Register</button>
+            <div class="modal-header">
+                <h2>☁️ Cloud Sync</h2>
+                <button class="btn-close" id="close-auth-btn">X</button>
             </div>
             
-            <p id="auth-msg" style="color: #ff6b6b; margin-top: 10px; font-size: 0.9rem;"></p>
-            <button class="btn-close" id="close-auth-btn" style="position:absolute; top:20px; right:20px;">X</button>
-        </div>
-    </div>
+            <div class="auth-body">
+                <p style="color:#94a3b8; margin-bottom:20px;">
+                    Login to save your XP, Gold, and Subjects across devices.
+                </p>
 
-    <div id="leaderboard-modal" class="modal hidden">
-        <div class="modal-content" style="width: 500px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="color: #ffd700;">🏆 Global Rankings</h2>
-                <button class="btn-close" id="close-leaderboard-btn">X</button>
-            </div>
-            
-            <div class="activity-buttons">
-                <button id="lb-tab-level" class="active-tab">Levels</button>
-                <button id="lb-tab-jumper">Jumper</button>
-                <button id="lb-tab-reflex">Reflex</button>
-            </div>
+                <input type="email" id="auth-email" placeholder="Email Address" />
+                <input type="password" id="auth-pass" placeholder="Password (6+ chars)" />
+                
+                <div id="auth-msg" style="color:#ef4444; margin:10px 0; font-size:0.9rem; min-height:20px;"></div>
 
-            <div id="leaderboard-list" style="text-align: left; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;">
-                <p style="text-align:center;">Loading scores...</p>
+                <div class="auth-actions">
+                    <button id="confirm-login-btn" class="btn-primary" style="flex:1;">Login</button>
+                    <button id="confirm-register-btn" class="btn-secondary" style="flex:1;">Register</button>
+                </div>
             </div>
         </div>
     </div>
-
+    <div id="leaderboard-modal" class="modal hidden"> <div class="modal-content"> <div class="modal-header"> <h2 style="color: #ffd700;">🏆 Rankings</h2> <button class="btn-close" id="close-leaderboard-btn">X</button> </div> <div class="activity-buttons"> <button id="lb-tab-level" class="active-tab">Levels</button> <button id="lb-tab-jumper">Jumper</button> <button id="lb-tab-reflex">Reflex</button> </div> <div id="leaderboard-list" class="scrollable-list"> <p style="text-align:center;">Loading scores...</p> </div> </div> </div>
     <div id="break-modal" class="modal hidden">
         <div class="modal-content">
             <h2>🎉 Victory!</h2>
             <h1 id="break-timer">05:00</h1>
+            
             <div id="activity-menu">
                 <p>Choose an activity:</p>
                 <div class="activity-buttons">
@@ -125,54 +135,111 @@
                     <button id="btn-reflex">⚡ Reflex</button>
                 </div>
             </div>
-            <div id="activity-display" class="hidden"><div id="content-area"></div><button class="btn-secondary" id="stop-activity-btn" style="margin-top:10px;">Back</button></div>
-            <button class="btn-primary" id="skip-break-btn" style="margin-top: 15px;">Skip Break</button>
+
+            <div id="activity-display" class="hidden">
+                <div id="content-area"></div>
+                <button class="btn-secondary" id="stop-activity-btn" style="margin-top:10px;">Back</button>
+            </div>
+            
+            <p class="break-message">✨ Or just do your hobby and enjoy the break ✨</p>
         </div>
     </div>
-
-    <div id="shop-modal" class="modal hidden">
-        <div class="modal-content" style="width: 500px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h2 style="margin:0;">🛒 Item Shop</h2>
+   <div id="shop-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🛒 Item Shop</h2>
                 <button class="btn-close" id="close-shop-btn">X</button>
+                <button id="manage-subjects-btn" class="btn-icon">⚙️</button>
             </div>
-            <h3 style="color:#ffd700; border-bottom:1px solid #444; padding-bottom:10px; margin-bottom:20px;">Gold: <span id="shop-gold-display">0</span> 💰</h3>
+            
+            <div class="shop-gold-bar">
+                Gold: <span id="shop-gold-display">0</span> 💰
+            </div>
+
             <div id="shop-grid" class="shop-grid"></div>
         </div>
     </div>
-
-    <div id="subject-modal" class="modal hidden">
+  <div id="subject-modal" class="modal hidden">
         <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h2 style="margin:0;">📚 Study Goals</h2>
+            <div class="modal-header">
+                <h2>📚 Study Goals</h2>
                 <button class="btn-close" id="close-subject-btn">X</button>
             </div>
+            
             <div class="new-subject-form">
                 <input type="text" id="new-subject-name" placeholder="Subject Name" />
-                <input type="number" id="new-subject-target" placeholder="Target Hours" />
+                <input type="number" id="new-subject-target" placeholder="Target (Hrs)" />
                 <button id="add-subject-btn" class="btn-primary">ADD</button>
             </div>
+
             <div id="subject-list" class="subject-list"></div>
         </div>
     </div>
+    <div id="profile-modal" class="modal hidden"> <div class="modal-content"> <h2>👤 User Profile</h2> <p>What should we call you?</p> <input type="text" id="username-input" class="profile-input" placeholder="Enter your name" maxlength="15"> <button id="save-profile-btn" class="btn-primary">Save Profile</button> </div> </div>
+  <div id="welcome-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="welcome-title">Welcome Hero!</h2>
+            </div>
+            
+            <div class="welcome-body-container">
+                <div id="welcome-body">
+                    </div>
+            </div>
 
-    <div id="profile-modal" class="modal hidden">
-        <div class="modal-content" style="width: 400px;">
-            <h2>👤 User Profile</h2>
-            <p>What should we call you, hero?</p>
-            <input type="text" id="username-input" class="profile-input" placeholder="Enter your name" maxlength="15">
-            <button id="save-profile-btn" class="btn-primary">Save Profile</button>
+            <div class="welcome-footer">
+                <button id="close-welcome-btn" class="btn-primary">Let's Begin!</button>
+            </div>
         </div>
     </div>
+<div id="levelup-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: #ffd700; margin:0;">🌟 Level Up!</h2>
+            </div>
+            
+            <div class="levelup-body">
+                <div class="levelup-icon-container">
+                    <div class="levelup-emoji">🆙</div>
+                </div>
 
-    <div id="welcome-modal" class="modal hidden">
-        <div class="modal-content" style="width: 500px; text-align: left;">
-            <h2 id="welcome-title" style="text-align: center; color: #00d2ff;">Welcome Hero!</h2>
-            <div id="welcome-body" style="margin: 20px 0; line-height: 1.6; color: #ddd;"></div>
-            <button id="close-welcome-btn" class="btn-primary" style="width: 100%;">Let's Begin!</button>
+                <div class="levelup-details">
+                    <span class="levelup-label">You reached Level</span>
+                    <h1 id="new-level-display" class="levelup-number">2</h1>
+                    <div class="levelup-divider"></div>
+                    <p class="levelup-quote">"You are getting stronger every day!"</p>
+                </div>
+
+                <button id="close-levelup-btn" class="btn-primary">AWESOME!</button>
+            </div>
         </div>
     </div>
+    <div id="subject-complete-modal" class="modal hidden">
+    <div class="modal-content">...</div>
+    <div class="footer-menu">...</div> 
+    <div id="bestiary-modal">...</div> 
+</div>
 
+<div id="subject-complete-modal" class="modal hidden">
+    <div class="modal-content">
+        <button id="close-complete-btn" class="btn-primary">CONTINUE JOURNEY</button>
+    </div>
+</div>
+
+<div id="bestiary-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>💀 Monster Log</h2>
+            <button class="btn-close" id="close-bestiary-btn">X</button>
+        </div>
+        <div class="shop-gold-bar" style="margin-bottom:20px;">
+            Defeated: <span id="total-kills-display">0</span>
+        </div>
+        <div id="bestiary-grid" class="shop-grid"></div>
+    </div>
+</div>
+    </div>
     <script type="module" src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </body>
 </html>
